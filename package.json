@@ -11,6 +11,7 @@
     "@mdi/font": "5.9.55",
     "bootstrap": "^5.3.2",
     "core-js": "^3.8.3",
+    "lightweight-charts": "^4.1.0",
     "roboto-fontface": "*",
     "vue": "^3.2.13",
     "vuetify": "^3.3.20",
