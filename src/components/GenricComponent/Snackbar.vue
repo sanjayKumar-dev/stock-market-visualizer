@@ -2,16 +2,12 @@
     <div>
         <v-snackbar :timeout="2000" v-model="snackbar.show" :color="snackBarData.type" bottom>
             {{ snackBarData.mgs }}
-            <!-- <v-btn  @click="snackbar.show = false">
-                Close
-            </v-btn> -->
         </v-snackbar>
     </div>
 </template>
 <script>
 export default {
     props: {
-        // message: String,
         snackBarData: Object
     },
     data() {
@@ -23,10 +19,8 @@ export default {
         }
     },
     watch: {
-        snackBarData(newVal, oldVal) {
-            // Handle the change in the 'message' prop
+        snackBarData(newVal) {
             this.snackbar.show = newVal.showSnackBar
-            console.log(`Message changed from ${oldVal} to ${newVal}`);
         }
     }
 }
