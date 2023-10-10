@@ -30,6 +30,10 @@
         </v-form>
 
     </div>
+    <div v-if="isloading" class="text-center">
+        <v-progress-circular :size="70" :width="7" color="purple" indeterminate></v-progress-circular>
+
+    </div>
     <div v-if="!isDataSelected" class="initialMgs">
         <h3>Please select Any stock to Start Analysing</h3>
     </div>
@@ -48,6 +52,7 @@ export default {
     },
     data() {
         return {
+            isloading: false,
             isDataSelected: false,
             stckList: StockList,
             tvchart: null,
@@ -118,6 +123,7 @@ export default {
             this.candlestickSeries.applyOptions({ height: window.innerWidth, width: window.innerHeight })
         },
         submitFilterForm() {
+            this.isloading = true
             this.getStockData(this.filterForm.stock, this.filterForm.timeFrame)
         },
         async getStockData(symbol, timeFrame) {
@@ -136,8 +142,10 @@ export default {
                         } else {
                             this.createChart(response.data)
                         }
+                        this.isloading = false
 
                     } else {
+                        this.isloading = false
                         this.snackBarData = {
                             mgs: response.data.message,
                             type: 'error',
@@ -146,6 +154,7 @@ export default {
                     }
                 })
             } catch (err) {
+                this.isloading = false
                 this.snackBarData = {
                     mgs: 'Something went Wrong',
                     type: 'error',
