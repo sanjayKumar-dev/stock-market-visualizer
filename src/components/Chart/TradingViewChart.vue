@@ -6,12 +6,13 @@
                 <v-row>
                     <v-col cols="8" md="4">
                         <v-autocomplete label="Stock Symbles" density="compact" v-model="filterForm.stock" :items="stckList"
-                            :item-title="'name'" :item-value="'symbol'" :rules="[v => !!v || 'Name is required']"></v-autocomplete>
+                            :item-title="'name'" :item-value="'symbol'"
+                            :rules="[v => !!v || 'Name is required']"></v-autocomplete>
                     </v-col>
 
                     <v-col cols="8" md="2">
-                        <v-select density="compact" v-model="filterForm.timeFrame" label="Time Frame" :rules="[v => !!v || 'Timeframe is required']"
-                            :items="['1H', '1D']"></v-select>
+                        <v-select density="compact" v-model="filterForm.timeFrame" label="Time Frame"
+                            :rules="[v => !!v || 'Timeframe is required']" :items="['1H', '1D']"></v-select>
                     </v-col>
 
                     <v-col cols="8" md="2">
@@ -95,10 +96,11 @@ export default {
                 } else {
                     this.candlestickSeries = this.tvchart.addCandlestickSeries()
                     this.candlestickSeries.setData(this.chartData)
-                    
-                    this.lineSeries.applyOptions({
-                        visible: false
-                    })
+                    if (this.lineSeries) {
+                        this.lineSeries.applyOptions({
+                            visible: false
+                        })
+                    }
                     this.candlestickSeries.applyOptions({
                         visible: true,
                     })
@@ -122,7 +124,6 @@ export default {
             try {
                 await axios.get(`${process.env.VUE_APP_STOCKS_URI}/api/search?symbol=${symbol}&period=${timeFrame}`).then(response => {
                     if (response.data.statusCode === 'SUCCESS') {
-                        console.log('res', response.data)
                         this.snackBarData = {
                             mgs: response.data.message,
                             type: 'success',
@@ -137,7 +138,6 @@ export default {
                         }
 
                     } else {
-                        console.log(response.data.statusCode)
                         this.snackBarData = {
                             mgs: response.data.message,
                             type: 'error',
@@ -146,7 +146,6 @@ export default {
                     }
                 })
             } catch (err) {
-                console.log('err', err)
                 this.snackBarData = {
                     mgs: 'Something went Wrong',
                     type: 'error',
@@ -155,7 +154,7 @@ export default {
             }
         },
         updateChartData() {
-            if(this.typeOfChart === 'Line Chart'){
+            if (this.typeOfChart === 'Line Chart') {
                 this.lineSeries.setData(this.convertOHLCdataToLine())
             } else {
                 this.candlestickSeries.setData(this.chartData)
@@ -182,9 +181,6 @@ export default {
 </script>
   
 <style scoped>
-/* .inputFeild {
-    box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px !important;
-} */
 .initialMgs {
     font-style: italic;
 }
