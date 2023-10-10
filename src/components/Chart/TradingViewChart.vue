@@ -1,21 +1,21 @@
 <template>
-    <div>
+    <div class="inputFeild">
         <SnackBar :snackBarData="snackBarData" />
         <v-form v-model="valid">
             <v-container>
                 <v-row>
                     <v-col cols="8" md="4">
                         <v-autocomplete label="Stock Symbles" density="compact" v-model="filterForm.stock" :items="stckList"
-                            :item-title="'name'" :item-value="'symbol'"></v-autocomplete>
+                            :item-title="'name'" :item-value="'symbol'" :rules="[v => !!v || 'Name is required']"></v-autocomplete>
                     </v-col>
 
                     <v-col cols="8" md="2">
-                        <v-select density="compact" v-model="filterForm.timeFrame" label="Time Frame"
+                        <v-select density="compact" v-model="filterForm.timeFrame" label="Time Frame" :rules="[v => !!v || 'Timeframe is required']"
                             :items="['1H', '1D']"></v-select>
                     </v-col>
 
                     <v-col cols="8" md="2">
-                        <v-select density="compact" v-model="filterForm.toc" label="Type Of Chart"
+                        <v-select density="compact" v-model="typeOfChart" label="Type Of Chart"
                             :items="['Line Chart', 'Candlestick Chart']"></v-select>
                     </v-col>
 
@@ -32,14 +32,11 @@
     <div v-if="!isDataSelected" class="initialMgs">
         <h3>Please select Any stock to Start Analysing</h3>
     </div>
-    <div class="d-flex resize-div">
-        <div ref="chartContainer"></div>
-    </div>
+    <div ref="chartContainer"></div>
 </template>
   
 <script>
 import { createChart } from 'lightweight-charts'
-import { ChartDailyData } from '/src/MockData/chartdailyData.js'
 import { StockList } from '/src/MockData/stockList.js'
 import axios from 'axios'
 import SnackBar from '/src/components/GenricComponent/Snackbar.vue'
@@ -52,11 +49,14 @@ export default {
         return {
             isDataSelected: false,
             stckList: StockList,
+            tvchart: null,
             candlestickSeries: null,
+            lineSeries: null,
+            chartData: [],
+            typeOfChart: 'Candlestick Chart',
             filterForm: {
-                stock: '',
-                timeFrame: '',
-                toc: ''
+                stock: 'NIFTY50',
+                timeFrame: '1D'
             },
             snackBarData: {
                 mgs: '',
@@ -65,7 +65,47 @@ export default {
             }
         }
     },
+    watch: {
+        typeOfChart() {
+            this.setSpecificChart()
+        }
+    },
     methods: {
+        convertOHLCdataToLine() {
+            let lineData = []
+            this.chartData.forEach((data) => {
+                lineData.push({
+                    time: data.time,
+                    value: data.close
+                })
+            })
+            return lineData
+        },
+        setSpecificChart() {
+            if (this.isDataSelected) {
+                if (this.typeOfChart === 'Line Chart') {
+                    this.lineSeries = this.tvchart.addLineSeries()
+                    this.lineSeries.setData(this.convertOHLCdataToLine())
+                    this.candlestickSeries.applyOptions({
+                        visible: false,
+                    })
+                    this.lineSeries.applyOptions({
+                        visible: true
+                    })
+                } else {
+                    this.candlestickSeries = this.tvchart.addCandlestickSeries()
+                    this.candlestickSeries.setData(this.chartData)
+                    
+                    this.lineSeries.applyOptions({
+                        visible: false
+                    })
+                    this.candlestickSeries.applyOptions({
+                        visible: true,
+                    })
+                }
+            }
+
+        },
         updateChartDimensions() {
             const div = this.$refs.resizeDiv;
             const rect = div.getBoundingClientRect();
@@ -76,13 +116,11 @@ export default {
             this.candlestickSeries.applyOptions({ height: window.innerWidth, width: window.innerHeight })
         },
         submitFilterForm() {
-            console.log(this.filterForm)
-            this.snackBarMgs = 'Testing 123'
-            this.getStockData()
+            this.getStockData(this.filterForm.stock, this.filterForm.timeFrame)
         },
-        async getStockData() {
+        async getStockData(symbol, timeFrame) {
             try {
-                await axios.get(`${process.env.VUE_APP_STOCKS_URI}/api/search?symbol=NIFTYBANK&period=1D`).then(response => {
+                await axios.get(`${process.env.VUE_APP_STOCKS_URI}/api/search?symbol=${symbol}&period=${timeFrame}`).then(response => {
                     if (response.data.statusCode === 'SUCCESS') {
                         console.log('res', response.data)
                         this.snackBarData = {
@@ -90,8 +128,14 @@ export default {
                             type: 'success',
                             showSnackBar: true
                         }
-                        // this.isDataSelected = true
-                        this.createChart()
+                        this.chartData = response.data.result
+                        if (this.isDataSelected) {
+                            this.updateChartData(response.data)
+
+                        } else {
+                            this.createChart(response.data)
+                        }
+
                     } else {
                         console.log(response.data.statusCode)
                         this.snackBarData = {
@@ -101,24 +145,29 @@ export default {
                         }
                     }
                 })
-
             } catch (err) {
+                console.log('err', err)
                 this.snackBarData = {
-                    mgs: 'Error while retrieveing the data',
+                    mgs: 'Something went Wrong',
                     type: 'error',
                     showSnackBar: true
                 }
             }
         },
+        updateChartData() {
+            if(this.typeOfChart === 'Line Chart'){
+                this.lineSeries.setData(this.convertOHLCdataToLine())
+            } else {
+                this.candlestickSeries.setData(this.chartData)
+            }
+        },
         createChart() {
-            const chart = createChart(this.$refs.chartContainer, {
+            this.tvchart = createChart(this.$refs.chartContainer, {
                 width: this.chartWidth - 15,
                 height: this.chartHeight - 200,
             })
-            this.candlestickSeries = chart.addCandlestickSeries()
-            const data = ChartDailyData
-            this.candlestickSeries.setData(data)
             this.isDataSelected = true
+            this.setSpecificChart()
         }
     },
     computed: {
@@ -129,10 +178,13 @@ export default {
             return window.innerHeight;
         },
     },
-};
+}
 </script>
   
 <style scoped>
+/* .inputFeild {
+    box-shadow: rgb(38, 57, 77) 0px 20px 30px -10px !important;
+} */
 .initialMgs {
     font-style: italic;
 }

@@ -1,10 +1,8 @@
 <template>
-    <!-- <v-navigation-drawer floating permanent class="sidenav"> -->
-        <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-view-dashboard" title="Home" value="home"></v-list-item>
-            <v-list-item prepend-icon="mdi-forum" title="About" value="about"></v-list-item>
-        </v-list>
-    <!-- </v-navigation-drawer> -->
+    <v-list density="compact" nav>
+        <v-list-item prepend-icon="mdi-view-dashboard" title="Home" value="home"></v-list-item>
+        <v-list-item prepend-icon="mdi-forum" title="About" value="about"></v-list-item>
+    </v-list>
 </template>
 
 <script>
@@ -13,5 +11,4 @@ export default {
 }
 </script>
 
-<style>
-</style>
+<style></style>
